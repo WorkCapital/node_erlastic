@@ -1,6 +1,6 @@
 // BERT-NODE
 // Arnaud Wetzel, Inspired by bert.js of 2009 Rusty Klophaus (@rklophaus)
-// Rewrite it to 
+// Rewrite it to
 // - code and decode from node-js Buffer objects
 // - handle erlang 17 maps
 // - binary type is Buffer
@@ -66,7 +66,24 @@ function BertTuple(Arr) {
 	};
 }
 
-
+function BertMap(Map) {
+	this.type = "Map";
+	this.length = Object.keys(Map).length;
+	this.value = Map;
+	Object.keys(Map).forEach (function(key) {
+		this[key] = Map[key];})
+	// }.bind(this))
+	this.toString = function () {
+		var s = "";
+		Object.keys(this.value).forEach(function(key)  {
+			if (s !== "") {
+				s += ", ";
+			};
+			s += key.toString() + " => " + this[key].toString();
+		})
+		return "#{" + s + "}";
+	};
+}
 
 // - INTERFACE -
 BertClass.prototype.encode = function (Obj,nocopy) {
@@ -78,7 +95,7 @@ BertClass.prototype.encode = function (Obj,nocopy) {
     if(!nocopy){
        res = new Buffer(this.output_buffer.length - tail_buffer.length);
        this.output_buffer.copy(res,0,0,res.length);
-       return res; 
+       return res;
     }else{
 	  return this.output_buffer.slice(0,this.output_buffer.length - tail_buffer.length);
     }
@@ -103,6 +120,9 @@ BertClass.prototype.tuple = function () {
 	return new BertTuple(arguments);
 };
 
+BertClass.prototype.map = function (Map) {
+	return new BertMap(Map);
+};
 
 
 // - ENCODING -
@@ -249,7 +269,7 @@ BertClass.prototype.encode_tuple = function (Obj, buffer) {
 BertClass.prototype.encode_array = function (Obj, buffer) {
     if (Obj.length == 0){
       buffer[0] = this.NIL;
-      return buffer.slice(1);    
+      return buffer.slice(1);
     }
     buffer[0] = this.LIST;
     buffer.writeUInt32BE(Obj.length,1);
@@ -440,7 +460,7 @@ BertClass.prototype.decode_map = function (buffer) {
 		buffer = El.rest;
 	}
 	return {
-		value: Map,
+		value: this.map(Map),
 		rest: buffer
 	};
 };
@@ -472,12 +492,12 @@ BertClass.prototype.decode_nil = function (buffer) {
 // of the supplied string.
 BertClass.prototype.bytes_to_int = function (buffer, Length, unsigned) {
     switch (Length) {
-        case 1: 
-            return unsigned ? buffer.readUInt8(0, true) : buffer.readInt8(0, true); 
+        case 1:
+            return unsigned ? buffer.readUInt8(0, true) : buffer.readInt8(0, true);
         case 2:
-            return unsigned ? buffer.readUInt16BE(0, true) : buffer.readInt16BE(0, true); 
+            return unsigned ? buffer.readUInt16BE(0, true) : buffer.readInt16BE(0, true);
         case 4:
-            return unsigned ? buffer.readUInt32BE(0, true) : buffer.readInt32BE(0, true); 
+            return unsigned ? buffer.readUInt32BE(0, true) : buffer.readInt32BE(0, true);
     }
 };
 
